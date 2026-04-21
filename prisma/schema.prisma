@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  email        String       @unique
+  password     String
+  name         String?
+  role         Role         @default(USER)
+  tournaments  Tournament[] @relation("UserTournaments")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Tournament {
+  id          Int      @id @default(autoincrement())
+  name        String
+  date        DateTime
+  description String?
+  teams       Team[]
+  matches     Match[]
+  users       User[]   @relation("UserTournaments")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Team {
+  id           Int        @id @default(autoincrement())
+  name         String
+  tournamentId Int
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  homeMatches  Match[]    @relation("HomeTeam")
+  awayMatches  Match[]    @relation("AwayTeam")
+
+  @@unique([tournamentId, name])
+}
+
+model Match {
+  id           Int        @id @default(autoincrement())
+  tournamentId Int
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  homeTeamId   Int
+  homeTeam     Team       @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeamId   Int
+  awayTeam     Team       @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  round        Int
+  homeScore    Int?
+  awayScore    Int?
+  played       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([tournamentId, round])
+  @@unique([tournamentId, homeTeamId, awayTeamId])
+}
