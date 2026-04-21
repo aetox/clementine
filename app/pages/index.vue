@@ -1,5 +1,11 @@
 <script setup lang="ts">
-await navigateTo("/dashboard");
+const { isAuthenticated } = useAuth();
+
+if (isAuthenticated.value) {
+  await navigateTo("/dashboard");
+} else {
+  await navigateTo("/register");
+}
 </script>
 
 <template>

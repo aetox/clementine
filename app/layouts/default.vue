@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const route = useRoute();
 const drawerId = "main-nav-drawer";
+const { user, isAuthenticated, logout } = useAuth();
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: "dashboard" },
@@ -146,6 +147,20 @@ function closeDrawer() {
                 <span>{{ item.label }}</span>
               </NuxtLink>
             </nav>
+            <div class="mt-8 border-t border-base-200 pt-4">
+              <template v-if="isAuthenticated">
+                <div class="mb-4">
+                  <p class="text-sm opacity-70">Connecté en tant que</p>
+                  <p class="font-bold">{{ user?.name || user?.email }}</p>
+                  <span class="badge badge-sm badge-primary mt-1">{{ user?.role }}</span>
+                </div>
+                <button class="btn btn-outline btn-error w-full btn-sm" @click="logout">Deconnexion</button>
+              </template>
+              <template v-else>
+                <NuxtLink to="/login" class="btn btn-primary w-full btn-sm text-white mb-2">Se connecter</NuxtLink>
+                <NuxtLink to="/register" class="btn btn-outline w-full btn-sm">S'inscrire</NuxtLink>
+              </template>
+            </div>
           </div>
         </aside>
       </div>

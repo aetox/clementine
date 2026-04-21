@@ -68,6 +68,18 @@ export function useTournaments() {
     await fetchTournaments();
   }
 
+  async function enroll(id: number) {
+    await $fetch(`/api/tournaments/${id}/enroll`, {
+      method: "POST",
+    });
+  }
+
+  async function unenroll(id: number) {
+    await $fetch(`/api/tournaments/${id}/unenroll`, {
+      method: "DELETE",
+    });
+  }
+
   async function getStandings(id: number) {
     return await $fetch<{ tournamentId: number; standings: StandingEntry[] }>(
       `/api/tournaments/${id}/standings`,
@@ -85,5 +97,7 @@ export function useTournaments() {
     generateMatches,
     updateMatchScore,
     getStandings,
+    enroll,
+    unenroll,
   };
 }

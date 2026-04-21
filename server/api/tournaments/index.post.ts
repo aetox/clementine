@@ -1,9 +1,11 @@
 import { prisma } from "../../utils/prisma";
 import { handleApiError } from "../../utils/api";
 import { createTournamentSchema } from "../../../shared/schemas";
+import { requireAdmin } from "../../utils/protect";
 
 export default defineEventHandler(async (event) => {
   try {
+    requireAdmin(event);
     const body = await readBody(event);
     const input = createTournamentSchema.parse(body);
 

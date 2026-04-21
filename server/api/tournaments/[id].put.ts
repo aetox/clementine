@@ -4,9 +4,11 @@ import {
   tournamentIdParamSchema,
   updateTournamentSchema,
 } from "../../../shared/schemas";
+import { requireAdmin } from "../../utils/protect";
 
 export default defineEventHandler(async (event) => {
   try {
+    requireAdmin(event);
     const { id } = tournamentIdParamSchema.parse(getRouterParams(event));
     const body = await readBody(event);
     const input = updateTournamentSchema.parse(body);

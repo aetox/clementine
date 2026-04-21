@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import type { MatchDTO, TournamentDTO } from "../../../shared/types";
+import type { StandingEntry } from "../../../shared/types";
 
 const route = useRoute();
 const tournamentId = Number(route.params.id);
 
-const { fetchTournamentById, generateMatches, updateMatchScore } =
+const { fetchTournamentById, generateMatches, updateMatchScore, enroll, unenroll, getStandings } =
   useTournaments();
 const { teams, fetchTeams, createTeam } = useTeams();
+const { user, isAdmin, isAuthenticated } = useAuth();
 
 const tournament = ref<TournamentDTO | null>(null);
+const standings = ref<StandingEntry[]>([]);
 const selectedMatch = ref<MatchDTO | null>(null);
 const scoreModalOpen = ref(false);
 const addTeamModalOpen = ref(false);
@@ -17,6 +20,12 @@ const loading = ref(false);
 async function loadTournament() {
   loading.value = true;
   tournament.value = await fetchTournamentById(tournamentId);
+  try {
+    const res = await getStandings(tournamentId);
+    standings.value = res.standings || [];
+  } catch (e) {
+    standings.value = [];
+  }
   loading.value = false;
 }
 
@@ -75,6 +84,20 @@ async function onAddTeam(name: string) {
   await loadTournament();
   await fetchTeams();
 }
+
+async function onEnroll() {
+  await enroll(tournamentId);
+  await loadTournament();
+}
+
+async function onUnenroll() {
+  await unenroll(tournamentId);
+  await loadTournament();
+}
+
+const isEnrolled = computed(() => {
+  return tournament.value?.users?.some((u: any) => u.id === user.value?.id) || false;
+});
 </script>
 
 <template>
@@ -92,23 +115,55 @@ async function onAddTeam(name: string) {
         </div>
         
         <div class="flex flex-wrap gap-3">
-          <button
-            class="btn btn-secondary shadow-md font-bold"
-            @click="addTeamModalOpen = true"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-            Ajouter une equipe
-          </button>
-          
-          <button
-            class="btn btn-primary shadow-md font-bold"
-            @click="onGenerateMatches"
-          >
-             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586Z" /></svg>
-            Generer le planning
-          </button>
+          <template v-if="isAdmin">
+            <button
+              class="btn btn-secondary shadow-md font-bold"
+              @click="addTeamModalOpen = true"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Ajouter une equipe
+            </button>
+            <button
+              class="btn btn-primary shadow-md font-bold"
+              @click="onGenerateMatches"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586Z" /></svg>
+              Generer le planning
+            </button>
+          </template>
+          <template v-else-if="isAuthenticated">
+            <button
+              v-if="isEnrolled"
+              class="btn btn-error shadow-md font-bold"
+              @click="onUnenroll"
+            >
+              Se desinscrire
+            </button>
+            <button
+              v-else
+              class="btn btn-accent shadow-md font-bold"
+              @click="onEnroll"
+            >
+              S'inscrire !
+            </button>
+          </template>
         </div>
       </div>
+    </section>
+
+    <section v-if="tournament?.users?.length && isAdmin" class="panel rounded-box p-4 enter-fade">
+      <h3 class="display-title text-xl text-neutral mb-3">Joueurs inscrits ({{ tournament.users.length }})</h3>
+      <div class="flex flex-wrap gap-2">
+        <span v-for="user in tournament.users" :key="user.id" class="badge badge-secondary badge-lg font-semibold py-3 px-4 shadow-sm">
+          {{ user.name || user.email }}
+        </span>
+      </div>
+    </section>
+
+    <!-- Classement général -->
+    <section v-if="standings?.length" class="panel rounded-box p-4 enter-fade mt-6">
+      <h3 class="display-title text-xl text-neutral mb-3">Classement</h3>
+      <StandingsTable :standings="standings" />
     </section>
 
     <!-- Liste des equipes du tournoi -->
@@ -159,6 +214,7 @@ async function onAddTeam(name: string) {
             <MatchCard
               :match="match"
               :teams="tournament?.teams || []"
+              :is-admin="isAdmin"
               @edit-score="onOpenScoreModal"
               class="relative z-10 bg-base-100 shadow-sm hover:shadow-md transition-shadow border-2 border-transparent hover:border-primary/20 rounded-box"
             />

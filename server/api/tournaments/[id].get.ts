@@ -11,6 +11,7 @@ export default defineEventHandler(async (event) => {
       include: {
         teams: { orderBy: { name: "asc" } },
         matches: { orderBy: [{ round: "asc" }, { id: "asc" }] },
+        users: { select: { id: true, name: true } },
       },
     });
 

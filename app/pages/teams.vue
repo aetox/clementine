@@ -2,6 +2,7 @@
 const { tournaments, fetchTournaments } = useTournaments();
 const { teams, loading, error, fetchTeams, createTeam, deleteTeam } =
   useTeams();
+const { isAdmin } = useAuth();
 
 const form = reactive({
   name: "",
@@ -43,7 +44,7 @@ async function onCreateTeam() {
       <h2 class="display-title text-3xl mt-2">Creation et liste des equipes</h2>
     </section>
 
-    <section class="panel rounded-box p-5">
+    <section v-if="isAdmin" class="panel rounded-box p-5">
       <form
         class="grid md:grid-cols-[1fr_220px_auto] gap-3 items-end"
         @submit.prevent="onCreateTeam"
@@ -102,10 +103,11 @@ async function onCreateTeam() {
           <div>
             <p class="font-semibold">{{ team.name }}</p>
             <p class="text-sm opacity-70">
-              Tournoi: {{ team.tournament.name }}
+              Tournoi: {{ team.tournament?.name || "Inconnu" }}
             </p>
           </div>
           <button
+            v-if="isAdmin"
             class="btn btn-sm btn-outline btn-error"
             @click="deleteTeam(team.id)"
           >

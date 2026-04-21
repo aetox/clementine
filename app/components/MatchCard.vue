@@ -4,6 +4,7 @@ import type { MatchDTO, TeamDTO } from "../../shared/types";
 const props = defineProps<{
   match: MatchDTO;
   teams: TeamDTO[];
+  isAdmin?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -30,6 +31,7 @@ const awayName = computed(
           Round {{ match.round }}
         </p>
         <button
+          v-if="isAdmin"
           class="btn btn-xs btn-outline btn-secondary"
           @click="emit('editScore', match)"
         >

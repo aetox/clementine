@@ -7,6 +7,7 @@ const {
   createTournament,
   deleteTournament,
 } = useTournaments();
+const { isAdmin } = useAuth();
 
 await fetchTournaments();
 
@@ -25,10 +26,10 @@ async function onCreateTournament(payload: {
       <p class="text-xs uppercase tracking-[0.28em] text-accent font-bold">
         Tournois
       </p>
-      <h2 class="display-title text-3xl mt-2">Creer et gerer</h2>
+      <h2 class="display-title text-3xl mt-2">{{ isAdmin ? 'Creer et gerer' : 'Tournois disponibles' }}</h2>
     </section>
 
-    <TournamentForm @submit="onCreateTournament" />
+    <TournamentForm v-if="isAdmin" @submit="onCreateTournament" />
 
     <section v-if="loading" class="alert"><span>Chargement...</span></section>
     <section v-else-if="error" class="alert alert-error">
@@ -56,6 +57,7 @@ async function onCreateTournament(payload: {
               Ouvrir
             </NuxtLink>
             <button
+              v-if="isAdmin"
               class="btn btn-sm btn-outline btn-error"
               @click="deleteTournament(tournament.id)"
             >

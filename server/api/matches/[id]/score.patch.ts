@@ -4,9 +4,11 @@ import {
   matchIdParamSchema,
   updateMatchScoreSchema,
 } from "../../../../shared/schemas";
+import { requireAdmin } from "../../../utils/protect";
 
 export default defineEventHandler(async (event) => {
   try {
+    requireAdmin(event);
     const { id } = matchIdParamSchema.parse(getRouterParams(event));
     const body = await readBody(event);
     const input = updateMatchScoreSchema.parse(body);
