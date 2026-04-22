@@ -2,6 +2,8 @@ interface TeamWithTournament {
   id: number;
   name: string;
   tournamentId: number;
+  userId?: number | null;
+  user?: { id: number; name: string | null; email: string } | null;
   tournament: {
     id: number;
     name: string;

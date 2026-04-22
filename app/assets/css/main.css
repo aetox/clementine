@@ -2,10 +2,6 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
   --rounded-box: 1.1rem;
   --rounded-btn: 0.8rem;

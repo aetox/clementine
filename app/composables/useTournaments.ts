@@ -68,9 +68,10 @@ export function useTournaments() {
     await fetchTournaments();
   }
 
-  async function enroll(id: number) {
+  async function enroll(id: number, teamName: string) {
     await $fetch(`/api/tournaments/${id}/enroll`, {
       method: "POST",
+      body: { teamName },
     });
   }
 

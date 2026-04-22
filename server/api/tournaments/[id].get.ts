@@ -9,9 +9,11 @@ export default defineEventHandler(async (event) => {
     const tournament = await prisma.tournament.findUnique({
       where: { id },
       include: {
-        teams: { orderBy: { name: "asc" } },
+        teams: {
+          orderBy: { name: "asc" },
+          include: { user: { select: { id: true, name: true, email: true } } },
+        },
         matches: { orderBy: [{ round: "asc" }, { id: "asc" }] },
-        users: { select: { id: true, name: true } },
       },
     });
 

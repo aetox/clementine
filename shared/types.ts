@@ -4,6 +4,8 @@ export interface TeamDTO {
   id: number;
   name: string;
   tournamentId: number;
+  userId?: number | null;
+  user?: { id: number; name: string | null; email: string } | null;
 }
 
 export interface MatchDTO {

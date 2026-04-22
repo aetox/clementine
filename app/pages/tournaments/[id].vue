@@ -15,6 +15,8 @@ const standings = ref<StandingEntry[]>([]);
 const selectedMatch = ref<MatchDTO | null>(null);
 const scoreModalOpen = ref(false);
 const addTeamModalOpen = ref(false);
+const enrollModalOpen = ref(false);
+const enrollTeamName = ref("");
 const loading = ref(false);
 
 async function loadTournament() {
@@ -85,18 +87,28 @@ async function onAddTeam(name: string) {
   await fetchTeams();
 }
 
+function openEnrollModal() {
+  enrollTeamName.value = user.value?.name || "";
+  enrollModalOpen.value = true;
+}
+
 async function onEnroll() {
-  await enroll(tournamentId);
+  if (!enrollTeamName.value.trim()) return;
+  enrollModalOpen.value = false;
+  await enroll(tournamentId, enrollTeamName.value.trim());
   await loadTournament();
+  await fetchTeams();
 }
 
 async function onUnenroll() {
   await unenroll(tournamentId);
   await loadTournament();
+  await fetchTeams();
 }
 
 const isEnrolled = computed(() => {
-  return tournament.value?.users?.some((u: any) => u.id === user.value?.id) || false;
+  if (!user.value || !tournament.value) return false;
+  return tournament.value.teams.some((t) => t.userId === user.value?.id);
 });
 </script>
 
@@ -109,8 +121,8 @@ const isEnrolled = computed(() => {
             Tournoi
           </p>
           <h2 class="display-title text-3xl mt-2">{{ tournament?.name }}</h2>
-          <p class="mt-2 text-base-200/90 text-sm">
-            Ici, gere les participants et le planning des matchs.
+          <p v-if="tournament?.description" class="mt-2 text-base-200/90 text-sm">
+            {{ tournament.description }}
           </p>
         </div>
         
@@ -142,7 +154,7 @@ const isEnrolled = computed(() => {
             <button
               v-else
               class="btn btn-accent shadow-md font-bold"
-              @click="onEnroll"
+              @click="openEnrollModal"
             >
               S'inscrire !
             </button>
@@ -151,17 +163,8 @@ const isEnrolled = computed(() => {
       </div>
     </section>
 
-    <section v-if="tournament?.users?.length && isAdmin" class="panel rounded-box p-4 enter-fade">
-      <h3 class="display-title text-xl text-neutral mb-3">Joueurs inscrits ({{ tournament.users.length }})</h3>
-      <div class="flex flex-wrap gap-2">
-        <span v-for="user in tournament.users" :key="user.id" class="badge badge-secondary badge-lg font-semibold py-3 px-4 shadow-sm">
-          {{ user.name || user.email }}
-        </span>
-      </div>
-    </section>
-
     <!-- Classement général -->
-    <section v-if="standings?.length" class="panel rounded-box p-4 enter-fade mt-6">
+    <section v-if="standings?.length" class="panel rounded-box p-4 enter-fade">
       <h3 class="display-title text-xl text-neutral mb-3">Classement</h3>
       <StandingsTable :standings="standings" />
     </section>
@@ -172,6 +175,7 @@ const isEnrolled = computed(() => {
       <div class="flex flex-wrap gap-2">
         <span v-for="team in tournament.teams" :key="team.id" class="badge badge-accent badge-lg font-semibold py-3 px-4 shadow-sm">
           {{ team.name }}
+          <span v-if="team.user" class="opacity-60 ml-1 text-xs">— {{ team.user.name || team.user.email }}</span>
         </span>
       </div>
     </section>
@@ -242,5 +246,35 @@ const isEnrolled = computed(() => {
       @close="scoreModalOpen = false"
       @save="onSaveScore"
     />
+
+    <!-- Modale inscription -->
+    <dialog class="modal" :class="{ 'modal-open': enrollModalOpen }">
+      <div class="modal-box panel border border-base-300 shadow-2xl">
+        <p class="text-xs uppercase tracking-[0.25em] text-secondary font-bold">
+          Inscription
+        </p>
+        <h3 class="font-bold text-2xl display-title text-neutral mt-1">
+          Rejoindre le tournoi
+        </h3>
+
+        <form @submit.prevent="onEnroll" class="mt-4 space-y-4">
+          <label class="form-control">
+            <span class="label-text font-medium">Nom de votre equipe</span>
+            <input
+              v-model="enrollTeamName"
+              class="input input-bordered input-secondary mt-2"
+              placeholder="Ex: Les Champions"
+              required
+              minlength="1"
+            />
+          </label>
+
+          <div class="modal-action">
+            <button type="button" class="btn btn-ghost" @click="enrollModalOpen = false">Annuler</button>
+            <button type="submit" class="btn btn-primary" :disabled="!enrollTeamName.trim()">S'inscrire</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
   </main>
 </template>

@@ -8,24 +8,21 @@ export default defineEventHandler(async (event) => {
     const user = getUserFromEvent(event);
     const { id } = tournamentIdParamSchema.parse(getRouterParams(event));
 
-    const tournament = await prisma.tournament.findUnique({
-      where: { id },
-      include: { users: true },
+    const team = await prisma.team.findUnique({
+      where: {
+        tournamentId_userId: {
+          tournamentId: id,
+          userId: user.userId,
+        },
+      },
     });
 
-    if (!tournament) {
-      throw createError({ statusCode: 404, statusMessage: 'Tournament not found' });
+    if (!team) {
+      throw createError({ statusCode: 400, statusMessage: 'Vous n\'avez pas d\'équipe dans ce tournoi' });
     }
 
-    if (!tournament.users.some((u) => u.id === user.userId)) {
-      throw createError({ statusCode: 400, statusMessage: 'Not enrolled' });
-    }
-
-    await prisma.tournament.update({
-      where: { id },
-      data: {
-        users: { disconnect: { id: user.userId } },
-      },
+    await prisma.team.delete({
+      where: { id: team.id },
     });
 
     return { success: true };
